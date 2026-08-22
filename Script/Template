@@ -1,0 +1,669 @@
+local _version = "1.6.66"
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/" .. _version .. "/main.lua"))() 
+local Players            = game:GetService("Players")
+local RunService         = game:GetService("RunService")
+local ReplicatedStorage  = game:GetService("ReplicatedStorage")
+local Lighting           = game:GetService("Lighting")
+local UserInputService   = game:GetService("UserInputService")
+local HttpService        = game:GetService("HttpService")
+local Workspace          = game:GetService("Workspace")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local ContentProvider    = game:GetService("ContentProvider")
+local VirtualUser        = game:GetService("VirtualUser")
+
+local LocalPlayer = Players.LocalPlayer
+local player      = LocalPlayer  
+local char        = player.Character or player.CharacterAdded:Wait()
+local root        = char:WaitForChild("HumanoidRootPart")
+local cam         = Workspace.CurrentCamera
+
+local isMobile           = UserInputService.TouchEnabled
+local PromptButtonHoldBegan
+
+local http        = http_request or request or (syn and syn.request) or (fluxus and fluxus.request)
+local assetFromFile = getcustomasset or getsynasset
+local mkdir       = makefolder or function() end
+
+if not http then return end
+
+if player and player.OsPlatform then
+    local platform = player.OsPlatform
+    if platform == Enum.Platform.IOS or platform == Enum.Platform.Android then
+        isMobile = true
+    end
+end
+
+-- อัปเดตตัวละครเมื่อเกิดใหม่ เพื่อลดอาการแลคแทนการใช้ Loop
+player.CharacterAdded:Connect(function(newChar)
+    char = newChar
+    root = char:WaitForChild("HumanoidRootPart")
+end)
+
+WindUI:AddTheme({Name="Mid Summer",Accent=WindUI:Gradient({["0"]={Color=Color3.fromHex("#FFD194"),Transparency=0},["50"]={Color=Color3.fromHex("#FF7E5F"),Transparency=0},["100"]={Color=Color3.fromHex("#FF5F6D"),Transparency=0}},{Rotation=45}),Dialog=WindUI:Gradient({["0"]={Color=Color3.fromHex("#FFF3E0"),Transparency=0},["50"]={Color=Color3.fromHex("#FFE0B2"),Transparency=0},["100"]={Color=Color3.fromHex("#FFD194"),Transparency=0}},{Rotation=45}),Outline=WindUI:Gradient({["0"]={Color=Color3.fromHex("#FF8C42"),Transparency=0},["50"]={Color=Color3.fromHex("#FF7E5F"),Transparency=0},["100"]={Color=Color3.fromHex("#FF6A88"),Transparency=0}},{Rotation=45}),Text=WindUI:Gradient({["0"]={Color=Color3.fromHex("#6B4226"),Transparency=0},["50"]={Color=Color3.fromHex("#8B4513"),Transparency=0},["100"]={Color=Color3.fromHex("#A0522D"),Transparency=0}},{Rotation=45}),Placeholder=WindUI:Gradient({["0"]={Color=Color3.fromHex("#D9B08C"),Transparency=0},["50"]={Color=Color3.fromHex("#C68642"),Transparency=0},["100"]={Color=Color3.fromHex("#B5651D"),Transparency=0}},{Rotation=45}),Background=WindUI:Gradient({["0"]={Color=Color3.fromHex("#FFE5B4"),Transparency=0},["50"]={Color=Color3.fromHex("#FFC87C"),Transparency=0},["100"]={Color=Color3.fromHex("#FFAA5C"),Transparency=0}},{Rotation=45}),Button=WindUI:Gradient({["0"]={Color=Color3.fromHex("#FFAA5C"),Transparency=0},["50"]={Color=Color3.fromHex("#FF7E5F"),Transparency=0},["100"]={Color=Color3.fromHex("#FF5F6D"),Transparency=0}},{Rotation=45}),Icon=WindUI:Gradient({["0"]={Color=Color3.fromHex("#FF7F50"),Transparency=0},["50"]={Color=Color3.fromHex("#FF6A88"),Transparency=0},["100"]={Color=Color3.fromHex("#FF5F6D"),Transparency=0}},{Rotation=45})})
+
+WindUI:AddTheme({Name="Lunar Moon",Accent=WindUI:Gradient({["0"]={Color=Color3.fromHex("#232526"),Transparency=0},["50"]={Color=Color3.fromHex("#636363"),Transparency=0},["100"]={Color=Color3.fromHex("#E0E0E0"),Transparency=0}},{Rotation=90}),Dialog=WindUI:Gradient({["0"]={Color=Color3.fromHex("#1C1C1C"),Transparency=0},["50"]={Color=Color3.fromHex("#3A3A3A"),Transparency=0},["100"]={Color=Color3.fromHex("#636363"),Transparency=0}},{Rotation=90}),Outline=WindUI:Gradient({["0"]={Color=Color3.fromHex("#B0B0B0"),Transparency=0},["50"]={Color=Color3.fromHex("#C0C0C0"),Transparency=0},["100"]={Color=Color3.fromHex("#E0E0E0"),Transparency=0}},{Rotation=90}),Text=WindUI:Gradient({["0"]={Color=Color3.fromHex("#FFFFFF"),Transparency=0},["50"]={Color=Color3.fromHex("#D9D9D9"),Transparency=0},["100"]={Color=Color3.fromHex("#BFBFBF"),Transparency=0}},{Rotation=90}),Placeholder=WindUI:Gradient({["0"]={Color=Color3.fromHex("#A0A0A0"),Transparency=0},["50"]={Color=Color3.fromHex("#B0B0B0"),Transparency=0},["100"]={Color=Color3.fromHex("#C0C0C0"),Transparency=0}},{Rotation=90}),Background=WindUI:Gradient({["0"]={Color=Color3.fromHex("#101010"),Transparency=0},["50"]={Color=Color3.fromHex("#3A3A3A"),Transparency=0},["100"]={Color=Color3.fromHex("#636363"),Transparency=0}},{Rotation=90}),Button=WindUI:Gradient({["0"]={Color=Color3.fromHex("#3A3A3A"),Transparency=0},["50"]={Color=Color3.fromHex("#636363"),Transparency=0},["100"]={Color=Color3.fromHex("#A2A2A2"),Transparency=0}},{Rotation=90}),Icon=WindUI:Gradient({["0"]={Color=Color3.fromHex("#C0C0C0"),Transparency=0},["50"]={Color=Color3.fromHex("#E0E0E0"),Transparency=0},["100"]={Color=Color3.fromHex("#FFFFFF"),Transparency=0}},{Rotation=90})})
+
+WindUI:AddTheme({Name="Winter Frost",Accent=WindUI:Gradient({["0"]={Color=Color3.fromHex("#D0E8F2"),Transparency=0},["50"]={Color=Color3.fromHex("#A0D4F2"),Transparency=0},["100"]={Color=Color3.fromHex("#70C0F2"),Transparency=0}},{Rotation=45}),Dialog=WindUI:Gradient({["0"]={Color=Color3.fromHex("#E0F7FF"),Transparency=0},["50"]={Color=Color3.fromHex("#B0EFFF"),Transparency=0},["100"]={Color=Color3.fromHex("#80E7FF"),Transparency=0}},{Rotation=45}),Outline=WindUI:Gradient({["0"]={Color=Color3.fromHex("#70C0F2"),Transparency=0},["50"]={Color=Color3.fromHex("#50B0E0"),Transparency=0},["100"]={Color=Color3.fromHex("#30A0D0"),Transparency=0}},{Rotation=45}),Text=WindUI:Gradient({["0"]={Color=Color3.fromHex("#0D3B66"),Transparency=0},["50"]={Color=Color3.fromHex("#145DA0"),Transparency=0},["100"]={Color=Color3.fromHex("#1E81B0"),Transparency=0}},{Rotation=45}),Placeholder=WindUI:Gradient({["0"]={Color=Color3.fromHex("#7FB3D5"),Transparency=0},["50"]={Color=Color3.fromHex("#5FA2C5"),Transparency=0},["100"]={Color=Color3.fromHex("#3F91B5"),Transparency=0}},{Rotation=45}),Background=WindUI:Gradient({["0"]={Color=Color3.fromHex("#E6F0FA"),Transparency=0},["50"]={Color=Color3.fromHex("#CDE0F5"),Transparency=0},["100"]={Color=Color3.fromHex("#B4D1F0"),Transparency=0}},{Rotation=45}),Button=WindUI:Gradient({["0"]={Color=Color3.fromHex("#50B0E0"),Transparency=0},["50"]={Color=Color3.fromHex("#30A0D0"),Transparency=0},["100"]={Color=Color3.fromHex("#108FC0"),Transparency=0}},{Rotation=45}),Icon=WindUI:Gradient({["0"]={Color=Color3.fromHex("#30A0D0"),Transparency=0},["50"]={Color=Color3.fromHex("#108FC0"),Transparency=0},["100"]={Color=Color3.fromHex("#0D81B0"),Transparency=0}},{Rotation=45})})
+
+WindUI:AddTheme({Name="Elegant Night",Accent=WindUI:Gradient({["0"]={Color=Color3.fromHex("#3B0D5C"),Transparency=0},["50"]={Color=Color3.fromHex("#6A1B9A"),Transparency=0},["100"]={Color=Color3.fromHex("#9C27B0"),Transparency=0}},{Rotation=45}),Dialog=WindUI:Gradient({["0"]={Color=Color3.fromHex("#1A001A"),Transparency=0},["50"]={Color=Color3.fromHex("#3D003D"),Transparency=0},["100"]={Color=Color3.fromHex("#6A006A"),Transparency=0}},{Rotation=45}),Outline=WindUI:Gradient({["0"]={Color=Color3.fromHex("#9C27B0"),Transparency=0},["50"]={Color=Color3.fromHex("#7B1FA2"),Transparency=0},["100"]={Color=Color3.fromHex("#6A1B9A"),Transparency=0}},{Rotation=45}),Text=WindUI:Gradient({["0"]={Color=Color3.fromHex("#FFFFFF"),Transparency=0},["50"]={Color=Color3.fromHex("#E0E0E0"),Transparency=0},["100"]={Color=Color3.fromHex("#C0C0C0"),Transparency=0}},{Rotation=45}),Placeholder=WindUI:Gradient({["0"]={Color=Color3.fromHex("#B0A0B5"),Transparency=0},["50"]={Color=Color3.fromHex("#9C8FA0"),Transparency=0},["100"]={Color=Color3.fromHex("#7B6F8C"),Transparency=0}},{Rotation=45}),Background=WindUI:Gradient({["0"]={Color=Color3.fromHex("#10001A"),Transparency=0},["50"]={Color=Color3.fromHex("#1A0033"),Transparency=0},["100"]={Color=Color3.fromHex("#30004D"),Transparency=0}},{Rotation=45}),Button=WindUI:Gradient({["0"]={Color=Color3.fromHex("#6A1B9A"),Transparency=0},["50"]={Color=Color3.fromHex("#9C27B0"),Transparency=0},["100"]={Color=Color3.fromHex("#B55BC5"),Transparency=0}},{Rotation=45}),Icon=WindUI:Gradient({["0"]={Color=Color3.fromHex("#9C27B0"),Transparency=0},["50"]={Color=Color3.fromHex("#B55BC5"),Transparency=0},["100"]={Color=Color3.fromHex("#D084E0"),Transparency=0}},{Rotation=45})})
+
+WindUI:AddTheme({Name="Lunar Abyss",Accent=WindUI:Gradient({["0"]={Color=Color3.fromHex("#0D0D1A"),Transparency=0},["50"]={Color=Color3.fromHex("#1A1A33"),Transparency=0},["100"]={Color=Color3.fromHex("#2E2E5C"),Transparency=0}},{Rotation=90}),Dialog=WindUI:Gradient({["0"]={Color=Color3.fromHex("#101026"),Transparency=0},["50"]={Color=Color3.fromHex("#1A1A3D"),Transparency=0},["100"]={Color=Color3.fromHex("#333366"),Transparency=0}},{Rotation=90}),Outline=WindUI:Gradient({["0"]={Color=Color3.fromHex("#2E2E5C"),Transparency=0},["50"]={Color=Color3.fromHex("#404080"),Transparency=0},["100"]={Color=Color3.fromHex("#5050A0"),Transparency=0}},{Rotation=90}),Text=WindUI:Gradient({["0"]={Color=Color3.fromHex("#A0A0FF"),Transparency=0},["50"]={Color=Color3.fromHex("#C0C0FF"),Transparency=0},["100"]={Color=Color3.fromHex("#E0E0FF"),Transparency=0}},{Rotation=90}),Placeholder=WindUI:Gradient({["0"]={Color=Color3.fromHex("#6060A0"),Transparency=0},["50"]={Color=Color3.fromHex("#8080C0"),Transparency=0},["100"]={Color=Color3.fromHex("#A0A0E0"),Transparency=0}},{Rotation=90}),Background=WindUI:Gradient({["0"]={Color=Color3.fromHex("#0A0A1A"),Transparency=0},["50"]={Color=Color3.fromHex("#1A1A33"),Transparency=0},["100"]={Color=Color3.fromHex("#2E2E5C"),Transparency=0}},{Rotation=90}),Button=WindUI:Gradient({["0"]={Color=Color3.fromHex("#404080"),Transparency=0},["50"]={Color=Color3.fromHex("#5050A0"),Transparency=0},["100"]={Color=Color3.fromHex("#6060C0"),Transparency=0}},{Rotation=90}),Icon=WindUI:Gradient({["0"]={Color=Color3.fromHex("#6060C0"),Transparency=0},["50"]={Color=Color3.fromHex("#8080E0"),Transparency=0},["100"]={Color=Color3.fromHex("#A0A0FF"),Transparency=0}},{Rotation=90})})
+
+WindUI:AddTheme({Name="Lunar Eclipse",Accent=WindUI:Gradient({["0"]={Color=Color3.fromHex("#33001A"),Transparency=0},["50"]={Color=Color3.fromHex("#660033"),Transparency=0},["100"]={Color=Color3.fromHex("#99004D"),Transparency=0}},{Rotation=45}),Dialog=WindUI:Gradient({["0"]={Color=Color3.fromHex("#1A0014"),Transparency=0},["50"]={Color=Color3.fromHex("#330028"),Transparency=0},["100"]={Color=Color3.fromHex("#66003F"),Transparency=0}},{Rotation=45}),Outline=WindUI:Gradient({["0"]={Color=Color3.fromHex("#99004D"),Transparency=0},["50"]={Color=Color3.fromHex("#CC3366"),Transparency=0},["100"]={Color=Color3.fromHex("#FF6699"),Transparency=0}},{Rotation=45}),Text=WindUI:Gradient({["0"]={Color=Color3.fromHex("#FFE6F0"),Transparency=0},["50"]={Color=Color3.fromHex("#FFB3CC"),Transparency=0},["100"]={Color=Color3.fromHex("#FF80A0"),Transparency=0}},{Rotation=45}),Placeholder=WindUI:Gradient({["0"]={Color=Color3.fromHex("#CC6699"),Transparency=0},["50"]={Color=Color3.fromHex("#FF99CC"),Transparency=0},["100"]={Color=Color3.fromHex("#FFB3D9"),Transparency=0}},{Rotation=45}),Background=WindUI:Gradient({["0"]={Color=Color3.fromHex("#1A0014"),Transparency=0},["50"]={Color=Color3.fromHex("#330028"),Transparency=0},["100"]={Color=Color3.fromHex("#66003F"),Transparency=0}},{Rotation=45}),Button=WindUI:Gradient({["0"]={Color=Color3.fromHex("#66003F"),Transparency=0},["50"]={Color=Color3.fromHex("#99004D"),Transparency=0},["100"]={Color=Color3.fromHex("#CC3366"),Transparency=0}},{Rotation=45}),Icon=WindUI:Gradient({["0"]={Color=Color3.fromHex("#99004D"),Transparency=0},["50"]={Color=Color3.fromHex("#CC3366"),Transparency=0},["100"]={Color=Color3.fromHex("#FF6699"),Transparency=0}},{Rotation=45})})
+
+local function gradient(text, startColor, endColor)
+    local result = ""
+    local length = #text
+    for i = 1, length do
+        local t = (i - 1) / math.max(length - 1, 1)
+        local r = math.floor(startColor.R * 255 + (endColor.R * 255 - startColor.R * 255) * t)
+        local g = math.floor(startColor.G * 255 + (endColor.G * 255 - startColor.G * 255) * t)
+        local b = math.floor(startColor.B * 255 + (endColor.B * 255 - startColor.B * 255) * t)
+        local char2 = text:sub(i, i)
+        result = result .. string.format('<font color="rgb(%d,%d,%d)">%s</font>', r, g, b, char2)
+    end
+    return result
+end
+
+local function Notify(title, content, icon, duration, background)
+    WindUI:Notify({
+        Title = title or "Notify",
+        Content = content or "No content",
+        Icon = icon or "check",
+        Duration = duration or 5,
+        Background = background or "rbxassetid://78131090774816"
+    })
+end
+
+local function Distance(pos)
+    if root then
+        return (root.Position - pos).Magnitude
+    end
+end
+
+local windowTitle = gradient(
+    "BObHub | TEST",
+    Color3.fromRGB(0, 255, 255),
+    Color3.fromRGB(30, 60, 255)
+)
+
+local Window = WindUI:CreateWindow({
+    Title = windowTitle,
+    Author = "discord.gg/2hFt8xMW37",
+    Theme = "Lunar Abyss",
+    Size = UDim2.fromOffset(400, 450),
+    Folder = "BObHub",
+    SideBarWidth = 180,
+    ScrollBarEnabled = true,
+    Icon = "https://raw.githubusercontent.com/oppw884-netizen/FemboyHub/refs/heads/main/UI/61006c9d66a84e36be9d26172e10725e.jpg",
+    BackgroundImageTransparency = 0.6,  
+    Background = "https://raw.githubusercontent.com/oppw884-netizen/FemboyHub/refs/heads/main/UI/8557765547548454842855184654955.jpe",
+    
+
+OpenButton = {
+        Title = "Open skibidi",
+        Icon = "sparkles",
+        CornerRadius = UDim.new(
+            1,
+            0
+        ),
+        StrokeThickness = 1,
+        Draggable = true,
+        Enabled = true,
+        OnlyMobile = false,
+        Scale = 0.92,
+         Color = ColorSequence.new(
+            Color3.fromRGB(0, 191, 255),
+            Color3.fromRGB(255, 105, 180)
+            ),
+    },
+    User = {
+        Enabled = true,
+        Anonymous = false,
+        Callback = function()
+            Notify(
+                "WillowHub",
+                LocalPlayer.Name,
+                "user",
+                5,
+            )
+        end,
+    },
+})
+
+
+local function ApplyOpenButtonTheme(
+    themeName
+)
+    pcall(function()
+        Window:EditOpenButton({
+            Title = "Open WillowHub",
+            Icon = "sparkles",
+            CornerRadius = UDim.new(
+                1,
+                0
+            ),
+            StrokeThickness = 1,
+            Enabled = true,
+            Draggable = true,
+            OnlyMobile = false,
+            Scale = 0.92,
+            Color =
+                GetOpenButtonColor(
+                    Color3.fromRGB(0, 191, 255),
+                    Color3.fromRGB(255, 105, 180)
+                ),
+        })
+    end)
+end
+
+Window:SetToggleKey(nil)
+
+Window:Tag({
+    Title = "v1.0.2",   
+    Color = Color3.fromHex("#30ff6a"),
+    Radius = 13,
+})
+
+local info = Window:Section({
+    Title = "Home",
+    Icon = "star",
+    Opened = true,
+    Collapsible = false,
+})
+
+local DiscordTab = info:Tab({
+    Title = "Discord",
+    Desc = "Discord", 
+    Icon = "info", 
+    IconColor = Color3.fromRGB(255, 255, 255), 
+    IconShape = "Square", 
+    IconThemed = true, 
+    Locked = false, 
+    ShowTabTitle = false, 
+    Border = true, 
+    CustomEmptyPage = { 
+        Icon = "lucide:smile", 
+        Title = "This is a cool empty tab", 
+        Desc = "I like it. its so great tab with cool 'custom empty page'", 
+    },
+})
+
+local Newupdate = info:Tab({
+    Title = "New Update",
+    Desc = "New Update", 
+    Icon = "zap", 
+    IconColor = Color3.fromRGB(255, 255, 255), 
+    IconShape = "Square", 
+    IconThemed = true, 
+    Locked = false, 
+    ShowTabTitle = false, 
+    Border = true, 
+    CustomEmptyPage = { 
+        Icon = "lucide:smile", 
+        Title = "This is a cool empty tab", 
+        Desc = "I like it. its so great tab with cool 'custom empty page'", 
+    },
+})
+
+Window:Divider()
+
+local Main = Window:Section({
+    Title = "Main",
+    Icon = "box",
+    Opened = true,
+    Collapsible = false,
+})
+local MainTab = Main:Tab({
+    Title = "Main",
+    Desc = "Main", 
+    Icon = "terminal", 
+    IconColor = Color3.fromRGB(255, 255, 255), 
+    IconShape = "Square", 
+    IconThemed = true, 
+    Locked = false, 
+    ShowTabTitle = false, 
+    Border = true, 
+    CustomEmptyPage = { 
+        Icon = "lucide:smile", 
+        Title = "This is a cool empty tab", 
+        Desc = "I like it. its so great tab with cool 'custom empty page'", 
+    },
+})
+local MisTab = Main:Tab({
+    Title = "Mis",
+    Desc = "Mis", 
+    Icon = "file-archive", 
+    IconColor = Color3.fromRGB(255, 255, 255), 
+    IconShape = "Square", 
+    IconThemed = true, 
+    Locked = false, 
+    ShowTabTitle = false, 
+    Border = true, 
+    CustomEmptyPage = { 
+        Icon = "lucide:smile", 
+        Title = "This is a cool empty tab", 
+        Desc = "I like it. its so great tab with cool 'custom empty page'", 
+    },
+})
+local TeleportTab = Main:Tab({
+    Title = "Teleport",
+    Desc = "Teleport", 
+    Icon = "map-pin", 
+    IconColor = Color3.fromRGB(255, 255, 255),
+    IconShape = "Square", 
+    IconThemed = true, 
+    Locked = false, 
+    ShowTabTitle = false, 
+    Border = true, 
+    CustomEmptyPage = { 
+        Icon = "lucide:smile", 
+        Title = "This is a cool empty tab", 
+        Desc = "I like it. its so great tab with cool 'custom empty page'", 
+    },
+})
+
+Window:Divider()
+local SettingsTab = Window:Tab({
+    Title = "Settings",
+    Desc = "Settings", 
+    Icon = "settings", 
+    IconColor = Color3.fromRGB(255, 255, 255), 
+    IconShape = "Square", 
+    IconThemed = true, 
+    Locked = false, 
+    ShowTabTitle = false, 
+    Border = true, 
+    CustomEmptyPage = { 
+        Icon = "lucide:smile", 
+        Title = "This is a cool empty tab", 
+        Desc = "I like it. its so great tab with cool 'custom empty page'", 
+    },
+})
+local folderPath = "BObHub"
+local autoConfigFile = folderPath .. "/Auto.txt"
+
+if not isfolder(folderPath) then makefolder(folderPath) end
+
+local function getPath(name)
+    return folderPath .. "/" .. name .. ".json"
+end
+
+function SaveConfig(name, data)
+    writefile(getPath(name), HttpService:JSONEncode(data))
+    writefile(autoConfigFile, HttpService:JSONEncode({
+        NameFileSelected = name,
+        Auto = true
+    }))
+end
+
+function LoadConfig(name)
+    local path = getPath(name)
+    if isfile(path) then
+        local success, result = pcall(function()
+            return HttpService:JSONDecode(readfile(path))
+        end)
+        if success then return result end
+    end
+end
+
+function AutoLoadConfig()
+    if isfile(autoConfigFile) then
+        local success, auto = pcall(function()
+            return HttpService:JSONDecode(readfile(autoConfigFile))
+        end)
+        if success and auto.Auto and auto.NameFileSelected then
+            return LoadConfig(auto.NameFileSelected)
+        end
+    end
+end
+
+function readAuto()
+    if isfile(autoConfigFile) then
+        local success, result = pcall(function()
+            return HttpService:JSONDecode(readfile(autoConfigFile))
+        end)
+        if success then return result end
+    end
+    return { NameFileSelected = "Default", Auto = false }
+end
+
+function writeAuto(state)
+    local current = readAuto()
+    current.Auto = state
+    writefile(autoConfigFile, HttpService:JSONEncode(current))
+end
+
+function ListFiles()
+    local files = {}
+    for _, file in ipairs(listfiles(folderPath)) do
+        local name = file:match("([^/\\]+)%.json$")
+        if name then
+            table.insert(files, name)
+        end
+    end
+    return files
+end
+
+local themeValues = {}
+for name in pairs(WindUI:GetThemes()) do
+    table.insert(themeValues, name)
+end
+
+local autoData = readAuto()
+if autoData and autoData.Auto and autoData.NameFileSelected and autoData.NameFileSelected ~= "" then
+    local data = LoadConfig(autoData.NameFileSelected)
+    if data and data.Theme then
+        WindUI:SetTheme(data.Theme)
+    end
+end
+
+local AssetKit = {}
+
+function AssetKit.Fetch(files, cfg)
+    cfg = cfg or {}
+
+    local root2 = cfg.RootDir or "Assets"
+    local cache = root2 .. "/" .. (cfg.SubDir or "Data")
+    local tries = cfg.Attempts or 3
+    local minBytes = cfg.MinimumSize or 120
+    local gateway = cfg.Proxy or ""
+    local force = cfg.ForceUpdate or false
+
+    if not isfolder(root2) then mkdir(root2) end
+    if not isfolder(cache) then mkdir(cache) end
+
+    local result = {}
+    local preload = {}
+
+    for key, link in pairs(files) do
+        local finalLink = link .. (link:find("?") and "&" or "?") .. "v=" .. tostring(os.time())
+
+        local safe = tostring(key):gsub("[^%w_%-]", "")
+        local extension = link:match("%.([%w]+)$") or "png"
+        local filePath = string.format("%s/%s.%s", cache, safe, extension)
+
+        local ok, existing = pcall(readfile, filePath)
+
+        if force or not ok or not existing or #existing < minBytes then
+            for _ = 1, tries do
+                local res = http({Url = gateway .. finalLink, Method = "GET"})
+                if res and res.StatusCode == 200 and res.Body and #res.Body >= minBytes then
+                    writefile(filePath, res.Body)
+                    break
+                end
+                task.wait(0.25)
+            end
+        end
+
+        if isfile(filePath) then
+            local ok2, id = pcall(assetFromFile, filePath)
+            if ok2 and id then
+                result[key] = { id = id, ext = extension }
+                if not extension:match("mp4") and not extension:match("webm") and not extension:match("mkv") then
+                    preload[#preload+1] = id
+                end
+            end
+        end
+    end
+
+    if #preload > 0 then
+        task.spawn(function()
+            pcall(function()
+                ContentProvider:PreloadAsync(preload)
+            end)
+        end)
+    end
+
+    return result
+end
+
+function AssetKit.PlayVideo(frame, vid, looped, auto)
+    if not frame or not frame:IsA("VideoFrame") then return end
+    frame.Video = vid
+    frame.Looped = (looped == nil) and true or looped
+    if not frame.Loaded then frame.Loaded:Wait() end
+    if auto ~= false then frame:Play() end
+end
+
+local loaded = {}
+local ok, res = pcall(function()
+    return AssetKit.Fetch({
+        demo = "https://raw.githubusercontent.com/oppw884-netizen/FemboyHub/refs/heads/main/UI/89db9644519d494fc46cfcd99285c317.jpg",
+        update_icon = "https://raw.githubusercontent.com/oppw884-netizen/FemboyHub/refs/heads/main/UI/89db9644519d494fc46cfcd99285c317.jpg",
+        owner_icon = "https://cdn.discordapp.com/attachments/1539982028232065045/1540558718360494080/ChatGPT_Image_Aug_19_2026_05_42_35_PM.png?ex=6a8a649c&is=6a89131c&hm=2044dc29403f823ffd9b3563e60c7b4db564ee6fd761bf6651b878d51f44d5f5"
+    },
+	{
+        ForceUpdate = true,
+    })
+end)
+
+if ok and type(res) == "table" then
+    loaded = res
+end
+
+local InviteCode = "2hFt8xMW37"
+local DiscordAPI = "https://discord.com/api/v10/invites/" .. InviteCode .. "?with_counts=true&with_expiration=true"
+
+DiscordTab:Divider()
+DiscordTab:Section({ 
+    Title = "Discord",
+    TextXAlignment = "Center",
+    TextSize = 17,
+    Opened = true,
+    Collapsible = false,
+})
+DiscordTab:Divider()
+
+DiscordTab:Section({ 
+    Title = "report bug at Discord",
+    TextXAlignment = "Center",
+    TextSize = 17,
+    Opened = true,
+    Collapsible = false,
+})
+
+local function LoadDiscordInfo()
+    local success, result = pcall(function()
+        local response = http({
+            Url = DiscordAPI,
+            Method = "GET",
+            Headers = {
+                ["User-Agent"] = "RobloxBot/1.0",
+                ["Accept"] = "application/json"
+            }
+        })
+        return HttpService:JSONDecode(response.Body)
+    end)
+
+    if success and result and result.guild then
+        local DiscordInfo = DiscordTab:Paragraph({
+            Title = result.guild.name,
+            Desc = ' <font color="#52525b">•</font> Member Count : ' .. tostring(result.approximate_member_count) ..
+                '\n <font color="#16a34a">•</font> Online Count : ' .. tostring(result.approximate_presence_count),
+            Image = "https://cdn.discordapp.com/icons/" .. result.guild.id .. "/" .. result.guild.icon .. ".png?size=1024",
+            ImageSize = 42,
+        })
+
+        DiscordTab:Button({
+            Title = "Update Info",
+            Callback = function()
+                local updated, updatedResult = pcall(function()
+                    local resp = http({
+                        Url = DiscordAPI,
+                        Method = "GET"
+                    })
+                    return HttpService:JSONDecode(resp.Body)
+                end)
+
+                if updated and updatedResult and updatedResult.guild then
+                    DiscordInfo:SetDesc(
+                        ' <font color="#52525b">•</font> Member Count : ' .. tostring(updatedResult.approximate_member_count) ..
+                        '\n <font color="#16a34a">•</font> Online Count : ' .. tostring(updatedResult.approximate_presence_count)
+                    )
+                end
+            end
+        })
+
+        DiscordTab:Button({
+            Title = "Copy Discord Invite",
+            Callback = function()
+                setclipboard("https://discord.gg/" .. InviteCode)
+            end
+        })
+    else
+        DiscordTab:Paragraph({
+            Title = "Error fetching Discord Info",
+            Desc = tostring(result),
+            Image = "triangle-alert",
+            ImageSize = 26,
+            Color = "Red",
+        })
+    end
+end
+
+task.spawn(LoadDiscordInfo)
+
+local Update = Newupdate:Section({
+    Title = "UPDATE",
+    Icon = "app-window",
+    Box = true,
+    TextXAlignment = "Center",
+    TextSize = 17,
+    Opened = true,
+    Collapsible = false,
+})
+
+
+Update:Paragraph({
+    Title = "UPDATED",
+    Desc = [[
+hi bro
+]],
+	Thumbnail = loaded.update_icon and loaded.update_icon.id or "",
+    ThumbnailSize = 100,
+    Locked = false,
+})
+Newupdate:Divider()
+Newupdate:Section({ 
+    Title = "Developer",
+    TextXAlignment = "Center",
+    TextSize = 17,
+    Opened = true,
+    Collapsible = false,
+})
+Newupdate:Divider()
+
+local Owner = Newupdate:Paragraph({
+    Title = "BOB",
+    Desc = "Dev and owner script",
+    Image = loaded.owner_icon and loaded.owner_icon.id or "",
+    ImageSize = 30,
+    Thumbnail = "",
+    ThumbnailSize = 0,
+    Locked = false,
+})
+
+local ThemeSelectDropdown = SettingsTab:Dropdown({
+    Title = "Select Theme",
+    Values = themeValues,
+    Value = themeValues[1],
+    Callback = function(option)
+        _G.ThemeSelect = option
+    end
+})
+
+SettingsTab:Button({
+    Title = "Apply Theme",
+    Locked = false,
+    Callback = function()
+        if _G.ThemeSelect then
+            WindUI:SetTheme(_G.ThemeSelect)
+            Notify("Theme Applied", "Now using theme: " .. _G.ThemeSelect, "success", 2)
+        else
+            Notify("Error", "No theme selected!", "error", 2)
+        end
+    end
+})
+
+SettingsTab:Divider()
+SettingsTab:Section({ 
+    Title = "Background Select",
+    TextXAlignment = "Center",
+    TextSize = 17,
+    Opened = true,
+    Collapsible = false,
+})
+SettingsTab:Divider()
+
+getgenv().BVaildSelect = {
+    ["No Background"] = "rbxassetid://0",
+    ["Robin HeadPat"]     =  "https://raw.githubusercontent.com/oppw884-netizen/FemboyHub/refs/heads/main/UI/8557765547548454842855184654955.jpe",
+    ["Robin 4thOfJuly"]   =  "https://raw.githubusercontent.com/oppw884-netizen/FemboyHub/refs/heads/main/UI/89db9644519d494fc46cfcd99285c317.jpg",
+    ["Robin OnTheCouch"]  =  "https://raw.githubusercontent.com/oppw884-netizen/FemboyHub/refs/heads/main/UI/b30b6abebd16aeae4b36fcb7d0eba396.jpg",
+    ["Robin PoolDay"]     =  "https://raw.githubusercontent.com/oppw884-netizen/FemboyHub/refs/heads/main/UI/cd678d206bbd5ff74274f3821007138a.jpg",
+}
+local firstRun = true
+
+local SBA = SettingsTab:Dropdown({
+    Title = "Select Background",
+    Values = { "No Background", "Robin HeadPat", "Robin 4thOfJuly", "Robin OnTheCouch", "Robin PoolDay" },
+    Value = "No Background",
+    Callback = function(option)
+        if firstRun then
+            firstRun = false
+            return
+        end
+        
+        local bgValue = getgenv().BVaildSelect[option]
+        
+        if bgValue:match("^http") then
+            task.spawn(function()
+                local ok, fetchResult = pcall(function()
+                    return AssetKit.Fetch({ [option] = bgValue })
+                end)
+                
+                if ok and fetchResult and fetchResult[option] then
+                    _G.BackgroundImage = fetchResult[option].id
+                    Window:SetBackgroundImage(_G.BackgroundImage)
+                    Notify("Background", "Loaded " .. option .. " successfully!", "image", 2)
+                else
+                    Notify("Error", "Failed to load image link.", "triangle-alert", 3)
+                end
+            end)
+        else
+            _G.BackgroundImage = bgValue
+            Window:SetBackgroundImage(_G.BackgroundImage)
+        end
+    end
+})
+
+SettingsTab:Divider()
+SettingsTab:Section({ 
+    Title = "Custom Background",
+    TextXAlignment = "Center",
+    TextSize = 17,
+    Opened = true,
+    Collapsible = false,
+})
+SettingsTab:Divider()
+
+local CustomBackground = SettingsTab:Input({
+    Title = "Background ID",
+    Type = "Input",
+    Placeholder = "1524722784817909811",
+    Callback = function(input)
+        if input ~= "" then
+            _G.BackgroundImage = "rbxassetid://" .. input
+            Window:SetBackgroundImage(_G.BackgroundImage)
+        end
+    end
+})
+
+local Keybind = SettingsTab:Keybind({
+    Title = "Keybind off gui",
+    Value = "G",
+    Callback = function(v)
+        Window:SetToggleKey(Enum.KeyCode[v])
+    end
+})
